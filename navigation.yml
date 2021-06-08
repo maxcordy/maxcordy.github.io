@@ -1,0 +1,21 @@
+# main links links
+main:
+  - title: "About Me"
+    url: /about/
+    
+  - title: "Research"
+    url: /research/
+
+  - title: "Projects"
+    url: /portfolio/
+
+  - title: "Publications"
+    url: /publications/ 
+    
+  - title: "Teaching"
+    url: /teaching/  
+        
+  - title: "Blog Posts"
+    url: /year-archive/
+    
+    

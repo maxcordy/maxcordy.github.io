@@ -1,0 +1,48 @@
+---
+layout: archive
+title: "Teaching"
+permalink: /teaching/
+author_profile: true
+---
+
+This page lists the classed I'm currently giving at <em>University of Luxembourg</em>
+
+<h2>Classes</h2>
+
+{% for course in site.teaching reversed %}
+{% if course.status == "current" %}
+<h3> {{course.title}} {% if course.code != nil %}({{course.code}}){% endif%}</h3>
+<ul style="line-height:1.1em;">
+  {% if course.venue != nil %}
+  <li> <em> {{course.venue}}</em></li>
+  {% endif %}
+  <li> {{ course.type | default: "?" }},  {% if course.language != nil %}
+    {{course.language}}, 
+   {% endif %}
+    {{course.session | default: "?"}}-{{ course.date | default: "1900-01-01" | date: "%y" }}</li>
+  <li> <a href="{{course.website}}" target="_blank">Website</a>
+</ul>
+<p> <em> {{course.content | markdownify }} </em> </p>
+{% endif %}
+{% endfor %}
+
+<h2>Previous Classes (2014-2018)</h2>
+
+<ul>
+  {% for course in site.teaching reversed %}
+  {% if course.status != "current" %}
+  <li> {{ course.date | default: "1900-01-01" | date: "%Y" }}:
+    {% if course.website == nil %}
+    {{course.title}}
+    {% else %}
+    <a href="{{course.website}}" target="_blank">{{course.title}}</a>
+    {% endif %}
+    ({% if course.code != nil %}{{ course.code }}, {% endif %}{{ course.session }}), <em>{{ course.type }}</em>.
+    {% if course.venue != nil %}
+    <ul>
+      <li> <em> {{course.venue}}</em> </li>
+    </ul>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+</ul>
