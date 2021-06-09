@@ -5,7 +5,7 @@ author_profile: true
 ---
 
 <div style="float:right; margin-bottom: 1em; margin-left: 1em; max-width:30%; height:auto;">
-  <img  src="/images/me.jpeg" />
+  <img  src="/images/profile.png" />
 </div>
 
 
