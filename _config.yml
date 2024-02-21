@@ -81,9 +81,9 @@ analytics:
 # Site Author
 author:
   name             : "Maxime Cordy"
-  avatar           : "profile.png"
+  avatar           : "profile.jpeg"
   employer         : "SnT, University of Luxembourg"
-  bio              : "Research Scientist in software engineering, formal methods and machine learning"
+  bio              : "Research Scientist in artificial intelligence and software engineering"
   location         : "Campus Kirchberg"
   office           : "E-003"
   googlemaps       : "https://goo.gl/maps/f1ptDgyXoXTFR8Aw7"
