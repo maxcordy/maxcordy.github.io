@@ -33,4 +33,4 @@ The key vision that drives my research is to empower Industry and Society with t
 
 My research is inspired from and applies to several industry partners in various domains such as finance, energy and automotive. I am deeply engaged in technology transfer and collaborative research with the industry, e.g. through the creation of spin-off companies and the leadership of private-public partnership projects at SnT.
 
-You can find an extended version of my CV as a [PDF file](../files/cv.pdf).
+My work has been advertised in public media, including [RTL](https://www.rtl.lu/mobiliteit/news/a/2085089.html), Paperjam ([AI security](), AI space applications [1](https://paperjam.lu/article/developing-space-weather-forec), [2](https://paperjam.lu/article/developing-space-weather-forec-2)) and [Research Luxembourg](https://www.researchluxembourg.org/en/in-conversation-with-our-young-researchers-maxime-cordy/).
