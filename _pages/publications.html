@@ -14,6 +14,7 @@ author_profile: true
 .well pre { margin: 0px 0px 0px 0px; font-size: 80%; }
 </style>
 
+<!-- Old structure based on paper type
 <div class="bibtex_structure">
   <div class="sections bibtextypekey">
     <div class="section @inproceedings">
@@ -30,7 +31,17 @@ author_profile: true
     </div>
   </div>
 </div>
+-->
 
+<div class="bibtex_structure">
+  <div class="group year" extra="ASC number">
+  	  <a href="#top" style="display: inline"><em>(Top of the page)</em></a>
+  	  <div style="padding-bottom:10px;"></div>
+  	  <div class="sort journal" extra="DESC string">
+      	<div class="templates"></div>
+      </div>
+  </div>
+</div>
 
 <bibtex src="{{ base_path }}/bibtex/data.bib" />
 
