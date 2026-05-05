@@ -81,11 +81,11 @@ analytics:
 # Site Author
 author:
   name             : "Maxime Cordy"
-  avatar           : "profile.jpeg"
+  avatar           : "profile.jpg"
   employer         : "SnT, University of Luxembourg"
-  bio              : "Research Scientist in artificial intelligence and software engineering"
+  bio              : "Senior Research Scientist and Professor in Software Engineering for Artificial Intelligence Systems"
   location         : "Campus Kirchberg"
-  office           : "E-003"
+  office           : "BLG, E02 011"
   googlemaps       : "https://goo.gl/maps/f1ptDgyXoXTFR8Aw7"
   googlescholar    : "https://scholar.google.com/citations?user=sRXHjkIAAAAJ&hl=en"
   email            : "maxime.cordy@uni.lu"
@@ -94,7 +94,7 @@ author:
   linkedin         : "https://www.linkedin.com/in/maxime-cordy-7a523569/"
   twitter          : "maxcordy"
   researchGroup    : "Serval @SnT"
-  researchUri      : "https://wwwfr.uni.lu/snt/research/serval"
+  researchUri      : "https://www.uni.lu/snt-en/research-groups/serval/"
   dblp             : "https://dblp.org/pid/73/10839.html"
 
 
