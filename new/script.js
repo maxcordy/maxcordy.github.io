@@ -39,29 +39,9 @@ function renderPublications(items) {
     </a>`).join('');
 }
 
-fetch('https://dblp.org/search/publ/api?q=author%3AMaxime_Cordy%3A&h=200&format=json')
-  .then(response => { if (!response.ok) throw new Error('DBLP unavailable'); return response.json(); })
-  .then(data => {
-    const hits = data.result?.hits?.hit || [];
-    const peerReviewedTypes = new Set([
-      'Conference and Workshop Papers',
-      'Journal Articles',
-      'Parts in Books or Collections'
-    ]);
-    const publications = hits.filter(hit => {
-      const info = hit.info || {};
-      const searchable = `${info.venue || ''} ${info.url || ''} ${info.ee || ''}`.toLowerCase();
-      return peerReviewedTypes.has(info.type) && !searchable.includes('corr') && !searchable.includes('arxiv');
-    }).map(hit => ({
-      year: hit.info.year || '—',
-      title: hit.info.title?.replace(/<[^>]*>/g, '') || 'Untitled publication',
-      venue: [hit.info.venue, hit.info.type].filter(Boolean).join(' · '),
-      url: hit.info.ee || hit.info.url || 'https://dblp.org/pid/73/10839.html'
-    }));
-    const currentYear = new Date().getFullYear();
-    const current = publications.filter(item => Number(item.year) === currentYear);
-    const previous = publications.filter(item => Number(item.year) === currentYear - 1);
-    const selected = current.length >= 6 ? current : [...current, ...previous];
-    renderPublications(selected.length ? selected : fallback);
-  })
-  .catch(() => renderPublications(fallback));
+const publications = Array.isArray(window.PUBLICATIONS_CACHE) ? window.PUBLICATIONS_CACHE : [];
+const currentYear = new Date().getFullYear();
+const current = publications.filter(item => Number(item.year) === currentYear);
+const previous = publications.filter(item => Number(item.year) === currentYear - 1);
+const selected = current.length >= 6 ? current : [...current, ...previous];
+renderPublications(selected.length ? selected : fallback);
