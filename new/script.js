@@ -6,6 +6,14 @@ menu.addEventListener('click', () => {
 });
 document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => document.querySelector('.site-header').classList.remove('open')));
 document.getElementById('year').textContent = new Date().getFullYear();
+const ticker = document.querySelector('.ticker');
+const tickerCopy = ticker?.querySelector('.ticker-copy');
+if (ticker && tickerCopy) {
+  const updateTicker = () => ticker.classList.toggle('is-overflowing', tickerCopy.scrollWidth > ticker.clientWidth);
+  new ResizeObserver(updateTicker).observe(ticker);
+  document.fonts?.ready.then(updateTicker);
+  updateTicker();
+}
 const projectsSection = document.getElementById('work');
 const blogSection = document.getElementById('notes');
 projectsSection.parentNode.insertBefore(blogSection, projectsSection);
