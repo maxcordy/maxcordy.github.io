@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A step-by-step tutorial for implementing and integrating a classification-accuracy test in the AI Assessment Sandbox Configurator.">
+  <title>Integrate a classification-accuracy test into AISC — Maxime Cordy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../themes/theme-aurora-mist.css">
+</head>
+<body class="article-page aisc-main-article">
+  <header class="site-header">
+    <a class="brand" href="../../index.html#top" aria-label="Maxime Cordy, home"><span>MC</span></a>
+    <nav aria-label="Main navigation"><a href="../../index.html#top">About</a><a href="../../index.html#expertise">What I Do</a><a href="../../index.html#notes">Featured</a><a href="../../index.html#work">Projects</a><a href="../../index.html#people">People</a><a href="../../index.html#leadership">Leadership and Teaching</a><a href="../../index.html#media">Media</a><a href="../../index.html#publications">Publications</a></nav>
+    <a class="header-link" href="mailto:maxime.cordy@uni.lu">Let’s connect <span aria-hidden="true">↗</span></a>
+    <button class="menu-button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
+  </header>
+
+  <main>
+    <article class="article-shell">
+      <header class="article-hero">
+        <a class="article-back" href="../../index.html#notes">← Back to featured research</a>
+        <p class="article-kicker">Technical tutorial <span>·</span> AISC plug-ins</p>
+        <h1>Integrate a classification-accuracy test into AISC</h1>
+        <p class="article-deck">A concrete, end-to-end example showing how to implement a third-party test as an AISC plug-in and run it in the AI Assessment Sandbox Configurator.</p>
+        <div class="article-meta"><span>By Maxime Cordy</span><span>August 2026</span><span>8 min read</span></div>
+        <div class="article-cloud" aria-hidden="true"><span>Clone</span><span>Implement</span><span>Integrate</span><span>Run</span></div>
+      </header>
+
+      <div class="article-layout article-layout-single">
+        <div class="article-content">
+          <p class="article-lead">This tutorial starts from a simple test and follows it through the complete integration process. The input is a CSV containing expected and predicted classes; the output is classification accuracy represented as a standard AISC measurement.</p>
+
+          <section id="tutorial">
+            <h2>Step by step: add a classification-accuracy test</h2>
+            <p>Suppose we have a CSV file containing the expected class and the class predicted by a model. We want to add a test that computes classification accuracy: the proportion of rows for which both labels match.</p>
+
+            <h3>A plug-in is made of three blocks</h3>
+            <p>AISC discovers a plug-in by importing its package and registering every class that inherits from <code>BaseEvaluationPlugin</code> and is exported from <code>__init__.py</code>. Each such class combines three blocks:</p>
+            <ul>
+              <li><strong>Configuration:</strong> a Pydantic model (<code>AccuracyConfig</code>) declaring the parameters shown in the evaluation form, here the names of the expected-label and predicted-label columns. It is passed as the type parameter of the plug-in class.</li>
+              <li><strong>Input(s):</strong> one <code>@evaluation_input</code> decorator per input slot, each backed by an <em>input provider</em> that parses the uploaded bytes into usable data. This test needs a single CSV dataset, parsed by the ready-made <code>CsvInputProvider</code>; a plug-in can just as well declare several inputs.</li>
+              <li><strong>Plug-in class:</strong> the <code>BaseEvaluationPlugin</code> subclass containing <code>plugin_name</code> (its display name), <code>evaluate()</code> (validates the config, reads the inputs, computes the result and returns a dict) and one <code>@metric</code> method per measurement (a read-only accessor that converts that dict returned by <code>evaluate()</code> into standard <code>Measure</code> objects).</li>
+            </ul>
+            <p>The steps below implement each of these blocks in turn, starting with the package that will hold them.</p>
+
+            <ol class="article-steps">
+              <li><strong>1. Create the package</strong><span>Create a separate directory for local plug-ins, enforce Python 3.12, initialise the library with that version and add the AISC plug-in interface as a dependency.</span></li>
+            </ol>
+            <pre class="article-code"><code>mkdir -p /absolute/path/to/aisc-plugins
+cd /absolute/path/to/aisc-plugins
+uv python install 3.12
+uv init --lib --python 3.12 accuracy-plugin
+cd accuracy-plugin
+uv add aisc-plugin-interface</code></pre>
+            <p>The plug-in interface requires Python 3.12 or later. <code>uv python install 3.12</code> guarantees an interpreter is available, and passing <code>--python 3.12</code> to <code>uv init</code> pins the version (<code>requires-python = "&gt;=3.12"</code>), preventing <code>uv</code> from selecting an older system interpreter. The command creates a package named <code>accuracy-plugin</code> with a Python module named <code>accuracy_plugin</code>; AISC uses its name and version in <code>pyproject.toml</code> for discovery. The interface is published on PyPI as <a href="https://pypi.org/project/aisc-plugin-interface/" target="_blank" rel="noopener">aisc-plugin-interface</a>, so <code>uv add</code> pulls it from there.</p>
+            <div class="article-note"><strong>Tip</strong><p>You can also name the project folder after the target: <code>uv init --lib --python 3.12 --name accuracy-plugin aisc-plugin-accuracy</code>. It produces the same package (<code>accuracy-plugin</code> / <code>accuracy_plugin</code>) but creates the folder <code>aisc-plugin-accuracy</code>.</p></div>
+
+            <ol class="article-steps" start="2">
+              <li><strong>2. Implement the test</strong><span>In <code>src/accuracy_plugin/plugin.py</code>, define the column names as typed configuration, declare the CSV input, calculate the accuracy and export it as a standard AISC measurement. Keep heavy imports out of the module top-level.</span></li>
+            </ol>
+            <pre class="article-code"><code># src/accuracy_plugin/plugin.py
+# Module-level imports: only the interface and pydantic. Heavy dependencies
+# (pandas, the target eval library, ...) are imported lazily, inside method
+# bodies - the module stays importable without them installed.
+from pydantic import BaseModel, Field
+
+from aisc_plugin_interface import (
+    BaseEvaluationPlugin,
+    InputType,
+    Measure,
+    evaluation_input,
+    metric,
+)
+from aisc_plugin_interface.input_providers.csv_input_provider import (
+    CsvInputProvider,
+)
+
+
+# Block 1 - Configuration: the fields the evaluation form asks the user for.
+class AccuracyConfig(BaseModel):
+    expected_label: str = Field(
+        description="Column containing the expected class"
+    )
+    predicted_label: str = Field(
+        description="Column containing the predicted class"
+    )
+
+
+# Block 2 - Input: one decorator per input slot; CsvInputProvider parses the
+# uploaded file into rows.
+@evaluation_input(
+    name="predictions",
+    label="Prediction dataset",
+    input_provider_class=CsvInputProvider,
+    input_type=InputType.DATASET,
+)
+# Block 3 - Plugin class: evaluation and metrics live here.
+class ClassificationAccuracyPlugin(
+    BaseEvaluationPlugin[AccuracyConfig]
+):
+    plugin_name = "Classification accuracy"  # display name in AISC
+
+    # Evaluate: validate the config, read the input, compute, return a dict.
+    def evaluate(self, config_data: dict):
+        # Heavy dependencies are imported inside the method body so the
+        # module stays importable without them installed.
+        config = self.validate_config_form_data(config_data)
+        rows = self.get_input_data("predictions") or []
+        if not rows:
+            raise ValueError("The prediction dataset is empty")
+
+        correct = sum(
+            row[config.expected_label]
+            == row[config.predicted_label]
+            for row in rows
+        )
+        return {"accuracy": correct / len(rows)}
+
+    # Metric: read-only accessor that translates the dict returned by
+    # evaluate() into standard Measure objects.
+    @metric("Classification accuracy")
+    def accuracy_metric(self, result: dict) -&gt; list[Measure]:
+        if not result:
+            return []
+        return [
+            Measure(
+                name="Classification accuracy",
+                score=result["accuracy"],
+                unit="ratio",
+            )
+        ]</code></pre>
+            <p>The configuration model tells AISC which parameters to request from the user. The input decorator tells it that the test needs a CSV dataset. The <code>evaluate</code> method contains the test itself, while <code>@metric</code> translates its result into the shared representation used by the platform. &ldquo;Heavy imports&rdquo; matter because AISC discovers a plug-in by importing its module: anything imported at the top of <code>plugin.py</code> - <code>numpy</code>, <code>pandas</code>, the target evaluation library - is imported in an environment where the plug-in’s own dependencies are <em>not</em> installed, and one missing import silently prevents registration. This minimal example has no such dependency, but a real one imports them inside method bodies (or behind <code>if TYPE_CHECKING:</code>), never at module level.</p>
+
+            <ol class="article-steps" start="3">
+              <li><strong>3. Export the class</strong><span>Expose the plug-in from <code>src/accuracy_plugin/__init__.py</code>. The loader imports this module and registers each exported subclass of <code>BaseEvaluationPlugin</code>.</span></li>
+            </ol>
+            <pre class="article-code"><code># src/accuracy_plugin/__init__.py
+from .plugin import ClassificationAccuracyPlugin
+
+__all__ = ["ClassificationAccuracyPlugin"]</code></pre>
+
+            <ol class="article-steps" start="4">
+              <li><strong>4. Test it</strong><span>Add <code>pytest</code> as a dev dependency and write a small unit-test suite that feeds a CSV through the plug-in and checks the exported measurement.</span></li>
+            </ol>
+            <pre class="article-code"><code>uv add --dev pytest</code></pre>
+            <pre class="article-code"><code># tests/test_plugin.py
+import sys
+
+sys.path.insert(0, "src")
+
+from accuracy_plugin import ClassificationAccuracyPlugin
+
+
+def test_accuracy_computed_from_csv():
+    plugin = ClassificationAccuracyPlugin()
+    plugin.set_input_content(
+        "predictions",
+        b"expected,predicted\n0,0\n1,1\n1,0\n",
+    )
+    result = plugin.evaluate(
+        {"expected_label": "expected", "predicted_label": "predicted"}
+    )
+    measures = plugin.export_metrics(result)
+    assert [m.score for m in measures] == [2 / 3]
+    assert measures[0].unit == "ratio"</code></pre>
+            <p>Run the suite before connecting the package to AISC:</p>
+            <pre class="article-code"><code>uv run python -m pytest -q tests</code></pre>
+
+            <ol class="article-steps" start="5">
+              <li><strong>5. Get AISC</strong><span>Clone the main project with its submodules. This provides the web application, backend, evaluation worker, plug-in manager and local development environment.</span></li>
+            </ol>
+            <pre class="article-code"><code>git clone --recursive https://github.com/lux-ai-factory/aisc.git
+cd aisc</code></pre>
+
+            <ol class="article-steps" start="6">
+              <li><strong>6. Register the folder</strong><span>In AISC’s <code>env.development</code>, set <code>PLUGIN_PATH</code> to the absolute directory that contains <code>accuracy-plugin</code>.</span></li>
+            </ol>
+            <pre class="article-code"><code>PLUGIN_PATH=/absolute/path/to/aisc-plugins</code></pre>
+
+            <ol class="article-steps" start="7">
+              <li><strong>7. Start AISC</strong><span>Launch the infrastructure and applications with the development configuration. The plug-in directory is mounted into both the backend and evaluation worker, and the package is discovered automatically.</span></li>
+            </ol>
+            <pre class="article-code"><code>docker compose --env-file env.development \
+  -f docker-compose-infra.development.yml \
+  -f docker-compose.development.yml up</code></pre>
+            <div class="article-note"><strong>Tip</strong><p>For local development, you can skip the Keycloak authentication entirely by setting <code>AUTH_ENABLED=false</code> in <code>env.development</code> before starting. This avoids the extra login/SSO setup when you are just iterating on a plug-in.</p></div>
+
+            <ol class="article-steps" start="8">
+              <li><strong>8. Verify discovery and lazy imports</strong><span>From the plug-in folder (<code>PLUGIN_PATH</code>), load the package through the AISC plug-in manager in an isolated environment. This proves the plug-in is discoverable and imports cleanly <em>without</em> its dependencies installed - the guarantee that lazy imports exist for.</span></li>
+            </ol>
+            <pre class="article-code"><code>cd /absolute/path/to/aisc-plugins
+uv run --isolated \
+  --with git+https://github.com/lux-ai-factory/aisc-plugin-manager.git \
+  python -c "
+from aisc_plugin_manager import Loader
+loader = Loader('/absolute/path/to/aisc-plugins', '', '', '', '')
+packages = loader.list_packages(refresh=True)
+assert 'accuracy_plugin' in packages, f'plugin not discovered: {packages}'
+print('Discovered:', packages)
+"</code></pre>
+            <p><code>Loader</code> takes the <strong>parent directory</strong> of the plug-in project - here, <code>PLUGIN_PATH</code> itself. If the assertion fails, the most likely culprit is a top-level import of a dependency that is not installed in the fresh environment; move it inside a method body.</p>
+
+            <ol class="article-steps" start="9">
+              <li><strong>9. Run the test</strong><span>Open AISC, select “Classification accuracy”, upload a CSV, enter the expected-label and predicted-label columns, and launch the evaluation. The resulting accuracy is stored and displayed like the measurements produced by any other plug-in.</span></li>
+            </ol>
+          </section>
+
+          <section id="two-evaluation-inputs">
+            <h2>Alternative: two evaluation inputs</h2>
+            <p>This minimal example expects both labels in a single CSV. It could equally have been written to take <strong>two separate evaluation inputs</strong> - one CSV (or npy/npz) of predictions and one CSV (or npy/npz) of targets - by stacking two <code>@evaluation_input</code> decorators on the class:</p>
+            <pre class="article-code"><code>@evaluation_input(
+    name="predictions",
+    label="Prediction dataset",
+    input_provider_class=CsvInputProvider,
+    input_type=InputType.DATASET,
+)
+@evaluation_input(
+    name="targets",
+    label="Target dataset",
+    input_provider_class=CsvInputProvider,
+    input_type=InputType.DATASET,
+)
+class ClassificationAccuracyPlugin(BaseEvaluationPlugin[AccuracyConfig]):
+    def evaluate(self, config_data: dict):
+        config = self.validate_config_form_data(config_data)
+        predictions = self.get_input_data("predictions") or []
+        targets = self.get_input_data("targets") or []
+        # ... pair rows by index and compare prediction against target</code></pre>
+            <p>Each decorator declares one input slot; inside <code>evaluate</code> you read them by name with <code>get_input_data(...)</code>. A production plug-in can also accept a model, perform inference, expose several metrics, create visualisations, report progress and upload result artefacts. The <a href="https://github.com/lux-ai-factory/aisc-plugin-performance" target="_blank" rel="noopener">performance-evaluation plug-in</a> provides a complete example covering classification, regression, ONNX models and multiple input formats.</p>
+          </section>
+
+          <section id="resources">
+            <h2>Resources</h2>
+            <div class="article-resource-links">
+              <a href="https://github.com/lux-ai-factory/aisc-plugin-interface/blob/master/PLUGIN_DEVELOPER_GUIDE.md" target="_blank" rel="noopener"><span>Developer guide</span><strong>Explore the complete AISC plug-in interface, optional hooks and additional examples</strong><b aria-hidden="true">↗</b></a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <a class="article-contact-banner" href="mailto:maxime.cordy@uni.lu"><span>Have an AI assessment test to integrate?</span><strong>Let’s collaborate ↗</strong></a>
+  <footer class="article-footer"><div class="section-shell"><span>© <span id="year"></span> Maxime Cordy</span></div></footer>
+  <script>
+    const menu = document.querySelector('.menu-button');
+    menu.addEventListener('click', () => {
+      const header = document.querySelector('.site-header');
+      header.classList.toggle('open');
+      menu.setAttribute('aria-expanded', header.classList.contains('open'));
+    });
+    document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => document.querySelector('.site-header').classList.remove('open')));
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

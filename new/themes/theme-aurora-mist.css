@@ -176,10 +176,14 @@ footer { background: linear-gradient(125deg, #b9c8ff, #a7ead5 58%, #9eddf7); }
 .article-kicker, .article-aside p { color: var(--violet-strong); }
 .article-meta { border-top-color: rgba(117, 91, 212, .18); }
 .article-layout { border-top-color: rgba(117, 91, 212, .18); }
-.article-content blockquote { background: linear-gradient(135deg, #b9c8ff, #a7ead5); border-radius: 20px; }
+.article-content blockquote,
+.article-tutorial-link,
+.article-asset-box { background: linear-gradient(135deg, #b9c8ff, #a7ead5); border-radius: 20px; }
 .article-note { border-left-color: #8068d8; border-radius: 0 16px 16px 0; }
 .article-principles span { color: var(--violet-strong); }
 .article-steps li { border-color: rgba(117, 91, 212, .18); }
+.aisc-main-article .article-kicker,
+.aisc-main-article .article-principles span { color: var(--ink); }
 .article-footer { background: #171a35; }
 .article-cloud span:nth-child(1) { background: #b9c8ff; }
 .article-cloud span:nth-child(2) { background: #9eddf7; }

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A research note by Maxime Cordy on building technical AI assessment sandboxes.">
+  <title>What does it take to build a technical AI assessment sandbox? — Maxime Cordy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../themes/theme-aurora-mist.css">
+</head>
+<body class="article-page aisc-main-article">
+  <header class="site-header">
+    <a class="brand" href="../../index.html#top" aria-label="Maxime Cordy, home"><span>MC</span></a>
+    <nav aria-label="Main navigation">
+      <a href="../../index.html#top">About</a><a href="../../index.html#expertise">What I Do</a><a href="../../index.html#notes">Featured</a><a href="../../index.html#work">Projects</a><a href="../../index.html#people">People</a><a href="../../index.html#leadership">Leadership and Teaching</a><a href="../../index.html#media">Media</a><a href="../../index.html#publications">Publications</a>
+    </nav>
+    <a class="header-link" href="mailto:maxime.cordy@uni.lu">Let’s connect <span aria-hidden="true">↗</span></a>
+    <button class="menu-button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
+  </header>
+
+  <main>
+    <article class="article-shell">
+      <header class="article-hero">
+        <a class="article-back" href="../../index.html#notes">← Back to featured research</a>
+        <p class="article-kicker">Featured research <span>·</span> AI assessment</p>
+        <h1>What does it take to build a technical AI assessment sandbox?</h1>
+        <p class="article-deck">No two AI systems should be assessed in exactly the same way. A technical AI assessment sandbox must therefore tailor its tests, tools and evidence to the system under evaluation, while keeping the process reproducible.</p>
+        <div class="article-meta"><span>By Maxime Cordy</span><span>August 2026</span><span>10 min read</span></div>
+        <div class="article-cloud" aria-hidden="true"><span>Qualify</span><span>Test</span><span>Understand</span><span>Improve</span></div>
+      </header>
+
+      <div class="article-layout article-layout-single">
+        <div class="article-content">
+          <p class="article-lead">A technical AI assessment sandbox is an isolated environment in which experts configure and run tests on an AI system, inspect the resulting evidence and iteratively improve the system. Its purpose is to support a rigorous assessment procedure adapted to the system at hand.</p>
+
+          <section id="why">
+            <h2>The missing infrastructure for technical AI assessment</h2>
+            <p>Technical assessment asks concrete questions about an AI system: How well does it perform under realistic conditions? Is it robust to attacks or distribution shifts? Does it expose sensitive information? Can its behaviour be explained? A technical AI assessment sandbox provides the controlled environment, tools and evidence needed to investigate such questions.</p>
+            <p>This is the necessary complement to <em>AI regulatory sandboxes</em>. A regulatory sandbox is a broader supervised process in which providers interact with competent authorities and other experts to explore regulatory requirements and compliance before market deployment. A technical assessment sandbox can supply part of the infrastructure and evidence used within that process, but it can equally support internal self-assessment, independent technical evaluation or conformity-assessment activities.</p>
+            <p>Building this technical infrastructure creates two connected problems. First, AI assessment tools are fragmented. A robustness benchmark, a privacy check and an explainability tool may each use different inputs, produce different outputs and document results differently. Repeating the same assessment in another organisation—or even six months later—can become difficult.</p>
+            <p>Second, there can be no universal assessment recipe. A large language model processing legal documents does not expose the same risks as a computer-vision system in a vehicle or a tabular model supporting a financial decision. They operate under different requirements, process different data modalities and rely on different model families. Their evaluation procedures must therefore differ too: from the controls and datasets selected to the metrics, attack scenarios and expertise needed to interpret the evidence.</p>
+            <p>The challenge is not to create one more test or one fixed checklist. It is to provide technical infrastructure that can assemble a unique assessment procedure for each AI system, execute it in a controlled environment and preserve enough common structure to make the resulting evidence usable by engineers, domain experts, auditors and decision-makers.</p>
+            <blockquote>Each AI system needs its own technical assessment procedure. The sandbox should make that tailored evaluation reproducible, traceable and reusable.</blockquote>
+          </section>
+
+          <section id="architecture">
+            <h2>Configure then assess</h2>
+            <p>Our answer is the <strong>AI Assessment Sandbox Configurator</strong>, an open-source framework developed within the Luxembourg AI Factory. Rather than delivering a pre-defined battery of tests, it helps experts compose a technical assessment around the system at hand. Its central design choice is to separate that configuration work from the execution of the resulting technical sandbox.</p>
+            <div class="article-principles article-workflow" aria-label="AI assessment sandbox workflow">
+              <article><span>01</span><h3>Qualify the system</h3><p>Capture its use case, requirements, stakeholders, sector, data modalities, model family, risk category and relevant trustworthiness dimensions.</p></article>
+              <article><span>02</span><h3>Design the assessment</h3><p>Select the controls, tests, metrics and datasets that fit this particular system from an extensible catalogue.</p></article>
+              <article><span>03</span><h3>Build the sandbox</h3><p>Generate a tailored, containerised environment that can be deployed where confidentiality and operational constraints require it.</p></article>
+              <article><span>04</span><h3>Assess and improve</h3><p>Run tests, discuss results across disciplines, apply mitigations and repeat the assessment to measure what changed.</p></article>
+            </div>
+            <p>This “sandbox à la carte” approach preserves an essential distinction: the <em>procedure</em> is unique to each system, while the <em>infrastructure</em> is shared. A credit-risk model, a multilingual assistant and an autonomous-driving component do not require the same evidence, but the way their assessments are configured, documented and made reproducible can follow common principles.</p>
+          </section>
+
+          <section id="evidence">
+            <h2>Integrate your own test in the plugin architecture</h2>
+            <p>The framework is deliberately tool-agnostic. Individual testing tools can evolve without forcing the whole platform to be rebuilt. A plug-in interface connects them to a shared catalogue, while a common data model harmonises their inputs, results and metadata.</p>
+            <h3>How third-party tests integrate with AISC</h3>
+            <p>The plug-in architecture is designed so that third-party developers can implement and integrate their own evaluation methods without modifying the core platform. In practice, each plug-in is an independent Python package containing one or more evaluation classes. The package depends on the <a href="https://github.com/lux-ai-factory/aisc-plugin-interface" target="_blank" rel="noopener">AISC plug-in interface</a>, while the platform’s plug-in manager discovers, loads and executes it.</p>
+            <p>Each class inherits from <code>BaseEvaluationPlugin</code> and provides five elements:</p>
+            <ol class="article-steps">
+              <li><strong>Configuration</strong><span>A Pydantic model defines the parameters, defaults and validation rules. The platform turns this model into the configuration form shown to the user.</span></li>
+              <li><strong>Inputs</strong><span>The plug-in declares the datasets or models it expects with <code>@evaluation_input</code>. Built-in or custom input providers translate uploaded files into the objects used by the test.</span></li>
+              <li><strong>Evaluation</strong><span>The <code>evaluate</code> method validates the configuration, retrieves the parsed inputs and runs the actual assessment logic.</span></li>
+              <li><strong>Measurements</strong><span>Methods marked with <code>@metric</code> convert the evaluation output into standard <code>Measure</code> objects that the platform can store, compare and visualise.</span></li>
+              <li><strong>Feedback</strong><span>Long-running tests can report progress and upload artefacts such as predictions, detailed logs or supplementary result files.</span></li>
+            </ol>
+
+            <a class="article-tutorial-link" href="../aisc-classification-accuracy-plugin/index.html"><span>Technical tutorial</span><strong>Build and integrate an example plugin in AISC</strong><small>Follow the guide <b aria-hidden="true">→</b></small></a>
+          </section>
+
+          <section id="limits">
+            <h2>What the platform cannot automate</h2>
+            <p>The Configurator organises an assessment; it does not decide what “safe enough” means. Experts must still determine which risks matter, whether a dataset is representative, how findings interact with a specific legal or operational context and which residual risks are acceptable.</p>
+            <p>The framework is also still evolving. The initial pilot exercised its harmonisation and reporting capabilities, not the complete automated workflow. Catalogue governance, full audit coverage, portability across infrastructures and alignment with future harmonised standards remain active research and engineering questions.</p>
+            <p>That is precisely why an open architecture matters. Technical assessment sandboxes will encounter new models, sectors and risks continuously. Their infrastructure must support learning across assessments without freezing innovation into a single checklist.</p>
+            <div class="article-asset-box"><strong>A shared European asset</strong><p>Our longer-term vision is an open, sovereign ecosystem for AI assessment: one that lets organisations keep sensitive data where it belongs while contributing reusable methods and comparable evidence to a broader community.</p></div>
+            <p>The AI Assessment Sandbox Configurator is available under the Apache 2.0 licence.</p>
+          </section>
+          <section id="contribute">
+            <h2>Contribute to the project</h2>
+            <div class="article-principles article-actions">
+              <article><h3>Implement a test</h3><p>Turn your assessment method into an AISC plug-in and make it available to other users.</p></article>
+              <article><h3>Try AISC locally</h3><p>Deploy the open-source platform, explore the existing tests and evaluate it on your own use case.</p></article>
+              <article><h3>Improve the platform</h3><p>Contribute code, documentation, feedback or new capabilities to the core open-source project.</p></article>
+              <article><h3>Collaborate with us</h3><p>Bring us your test, AI system or assessment challenge and work with our team on its integration.</p></article>
+            </div>
+          </section>
+
+          <section id="resources">
+            <h2>Resources</h2>
+            <div class="article-resource-links">
+              <a href="https://github.com/lux-ai-factory/aisc" target="_blank" rel="noopener"><span>AISC repository</span><strong>Explore the code and contribute on GitHub</strong><b aria-hidden="true">↗</b></a>
+              <a href="mailto:maxime.cordy@uni.lu"><span>Contact</span><strong>Contact us!</strong><b aria-hidden="true">↗</b></a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <a class="article-contact-banner" href="mailto:maxime.cordy@uni.lu"><span>Interested in trustworthy AI assessment?</span><strong>Let’s discuss your use case ↗</strong></a>
+  <footer class="article-footer"><div class="section-shell"><span>© <span id="year"></span> Maxime Cordy</span></div></footer>
+  <script>
+    const menu = document.querySelector('.menu-button');
+    menu.addEventListener('click', () => {
+      const header = document.querySelector('.site-header');
+      header.classList.toggle('open');
+      menu.setAttribute('aria-expanded', header.classList.contains('open'));
+    });
+    document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => document.querySelector('.site-header').classList.remove('open')));
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
